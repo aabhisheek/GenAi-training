@@ -3,13 +3,13 @@ import os
 from dotenv import load_dotenv
 
 from transformers import pipeline
-import openai
+import google.generativeai as genai
 
 # -----------------------------
 # Load environment variables
 # -----------------------------
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # -----------------------------
 # Constants
@@ -39,19 +39,19 @@ def generate_hf_text(prompt):
     return results
 
 # -----------------------------
-# OpenAI Generator
+# Gemini Generator
 # -----------------------------
-def generate_openai_text(prompt):
+def generate_gemini_text(prompt):
+    model = genai.GenerativeModel('gemini-1.5-flash')
     results = {}
     for temp in TEMPERATURES:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            temperature=temp,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=temp,
+            )
         )
-        results[f"temp={temp}"] = response.choices[0].message["content"]
+        results[f"temp={temp}"] = response.text
     return results
 
 # -----------------------------
@@ -61,7 +61,7 @@ def main():
     user_input = input("Enter your prompt: ")
 
     hf_outputs = generate_hf_text(user_input)
-    api_outputs = generate_openai_text(user_input)
+    api_outputs = generate_gemini_text(user_input)
 
     final_output = {
         "input": user_input,
