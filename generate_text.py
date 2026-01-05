@@ -3,13 +3,13 @@ import os
 from dotenv import load_dotenv
 
 from transformers import pipeline
-import google.generativeai as genai
+from groq import Groq
 
 # -----------------------------
 # Load environment variables
 # -----------------------------
 load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # -----------------------------
 # Constants
@@ -39,19 +39,19 @@ def generate_hf_text(prompt):
     return results
 
 # -----------------------------
-# Gemini Generator
+# Groq Generator
 # -----------------------------
-def generate_gemini_text(prompt):
-    model = genai.GenerativeModel('gemini-1.5-flash')
+def generate_groq_text(prompt):
     results = {}
     for temp in TEMPERATURES:
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=temp,
-            )
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            temperature=temp,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
         )
-        results[f"temp={temp}"] = response.text
+        results[f"temp={temp}"] = response.choices[0].message.content
     return results
 
 # -----------------------------
@@ -61,7 +61,7 @@ def main():
     user_input = input("Enter your prompt: ")
 
     hf_outputs = generate_hf_text(user_input)
-    api_outputs = generate_gemini_text(user_input)
+    api_outputs = generate_groq_text(user_input)
 
     final_output = {
         "input": user_input,

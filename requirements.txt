@@ -1,4 +1,6 @@
 transformers
 torch
 python-dotenv
-openai
+groq
+
+
